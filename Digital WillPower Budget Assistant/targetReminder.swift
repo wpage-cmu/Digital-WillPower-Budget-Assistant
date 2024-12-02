@@ -1,3 +1,10 @@
+//
+//  targetReminder.swift
+//  Digital WillPower Budget Assistant
+//
+//  Created by Will Page in Q4 2024.
+//
+
 import Foundation
 import SwiftUI
 import MapKit
@@ -6,17 +13,14 @@ import UserNotifications
 
 class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
-    private var stableLocation: CLLocation? // Location where the user has stayed
-    private var stableStartTime: Date? // Time when stability started
+    private var stableLocation: CLLocation?
+    private var stableStartTime: Date?
     private let stabilityThreshold: TimeInterval = 5 // seconds
-    private let stillnessThreshold: CLLocationDistance = 4.0 // Ignore small movements
+    private let stillnessThreshold: CLLocationDistance = 4.0 // meters
+    private let searchRadius: CLLocationDistance = 25 // meters
     private var recentNotifications: [String: Date] = [:]
     private let notificationCooldown: TimeInterval = 300 // 5 minutes
-    private var cachedResults: [String: [MKMapItem]] = [:] // Cache for PoIs
-    private let searchRadius: CLLocationDistance = 50 // meters
-    private let cacheExpiry: TimeInterval = 300 // 5 minutes cache expiration
-    private var stabilityTimer: Timer? // Timer for periodic stability checks
-    
+    private var stabilityTimer: Timer?
     
     @Published private var categories: [Category] = []
     private var cancellables = Set<AnyCancellable>()
@@ -27,6 +31,14 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
         locationManager.requestAlwaysAuthorization()
         locationManager.startUpdatingLocation()
         
+        // Load categories from UserDefaults
+        if let data = UserDefaults.standard.data(forKey: "categoriesKey"),
+           let decodedCategories = try? JSONDecoder().decode([Category].self, from: data) {
+            self.categories = decodedCategories
+            startTimerIfTargetsExist()
+        }
+        
+        // Watch for category changes
         NotificationCenter.default
             .publisher(for: UserDefaults.didChangeNotification)
             .sink { [weak self] _ in
@@ -37,41 +49,25 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
                 }
             }
             .store(in: &cancellables)
-        
-        // Also load initial categories
-        if let data = UserDefaults.standard.data(forKey: "categoriesKey"),
-           let decodedCategories = try? JSONDecoder().decode([Category].self, from: data) {
-            self.categories = decodedCategories
-            startTimerIfTargetsExist()
-        }
     }
     
-    deinit {
-        stabilityTimer?.invalidate() // Ensure the timer is stopped when the instance is deallocated
-    }
-    
-    // MARK: - CLLocationManagerDelegate
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let newLocation = locations.last else { return }
         
-        // Ignore updates with poor accuracy
         guard newLocation.horizontalAccuracy < 20 else {
             print("Ignoring location update due to poor accuracy: \(newLocation.horizontalAccuracy)")
             return
         }
         
-        // Reset stable location and timer for significant movement
         if let stableLocation = stableLocation,
            newLocation.distance(from: stableLocation) > stillnessThreshold {
             print("User moved significantly. Resetting stability.")
             resetStabilityTracking(newLocation)
         } else if stableLocation == nil {
-            // First time setting stable location
             resetStabilityTracking(newLocation)
         }
     }
     
-    // MARK: - Stability Tracking
     private func resetStabilityTracking(_ location: CLLocation) {
         stableLocation = location
         stableStartTime = Date()
@@ -79,109 +75,110 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
         print("Timer started: \(stableStartTime!)")
     }
     
-    // MARK: - Stability Evaluation
     private func evaluateStability() {
         guard let stableStartTime = stableStartTime,
-              let stableLocation = stableLocation else {
-            return // No stable location or timer yet
-        }
+              let stableLocation = stableLocation,
+              let currentLocation = locationManager.location else { return }
         
-        // Check if the user is within the stillness threshold
-        if let lastLocation = locationManager.location {
-            if lastLocation.distance(from: stableLocation) < stillnessThreshold {
-                let elapsedTime = Date().timeIntervalSince(stableStartTime)
-                
-                if elapsedTime > stabilityThreshold {
-                    print("Stability threshold reached. Searching for PoIs.")
-                    searchNearbyPlaces(at: stableLocation)
-                    self.stableStartTime = nil // Reset timer after action
-                } else {
-                    print("User stable for \(elapsedTime) seconds. Waiting to reach threshold.")
-                }
+        if currentLocation.distance(from: stableLocation) < stillnessThreshold {
+            let elapsedTime = Date().timeIntervalSince(stableStartTime)
+            
+            if elapsedTime > stabilityThreshold {
+                print("Stability threshold reached. Searching for PoIs.")
+                checkLocation(stableLocation)
+                self.stableStartTime = nil
             } else {
-                // User moved outside stillness threshold
-                print("User moved outside stillness threshold. Resetting stability.")
-                resetStabilityTracking(lastLocation) // Use `lastLocation` to reset stability
+                print("User stable for \(elapsedTime) seconds. Waiting to reach threshold.")
             }
+        } else {
+            print("User moved outside stillness threshold. Resetting stability.")
+            resetStabilityTracking(currentLocation)
         }
     }
     
-    // MARK: - PoI Search
-    private func searchNearbyPlaces(at location: CLLocation) {
-        let cacheKey = "\(location.coordinate.latitude.rounded(to: 3)),\(location.coordinate.longitude.rounded(to: 3))"
+    private func checkLocation(_ location: CLLocation) {
+        print("📍 Starting location search at: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        print("🎯 Search radius: \(Int(searchRadius))m")
         
-        // Use cached results if available
-        if let cachedPlaces = cachedResults[cacheKey],
-           let cacheTimestamp = cachedPlaces.first?.timeStamp,
-           Date().timeIntervalSince(cacheTimestamp) < cacheExpiry {
-            print("Using cached results for location: \(cacheKey)")
-            processPlaces(cachedPlaces)
-            return
-        }
+        // Create a points of interest request
+        let pointRequest = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: searchRadius)
         
-        // Perform a new search
-        print("Performing new search for location: \(location.coordinate)")
-        let searchRequest = MKLocalSearch.Request()
-        searchRequest.naturalLanguageQuery = "restaurant OR store OR market"
-        searchRequest.region = MKCoordinateRegion(
-            center: location.coordinate,
-            latitudinalMeters: searchRadius,
-            longitudinalMeters: searchRadius
-        )
+        // Get relevant categories from user targets
+        let relevantCategories = Array(Set(categories.compactMap { category -> MKPointOfInterestCategory? in
+            guard let placeCategory = PlaceCategory(rawValue: category.catName) else { return nil }
+            return CategoryMapper.getMKCategory(for: placeCategory)
+        }))
         
-        let search = MKLocalSearch(request: searchRequest)
-        search.start { response, error in
-            guard let response = response, error == nil else {
-                print("Search error: \(error?.localizedDescription ?? "Unknown error")")
+        // Set filter to only get relevant categories
+        pointRequest.pointOfInterestFilter = MKPointOfInterestFilter(including: relevantCategories)
+        
+        print("🔍 Search configuration:")
+        print("   Categories: \(relevantCategories.map { $0.rawValue })")
+        
+        // Create search with the point request
+        let search = MKLocalSearch(request: pointRequest)
+        search.start { [weak self] response, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Search error: \(error.localizedDescription)")
                 return
             }
             
-            let places = response.mapItems.map { mapItem -> MKMapItem in
-                var item = mapItem
-                item.timeStamp = Date() // Attach timestamp for caching
-                return item
+            guard let response = response else {
+                print("⚠️ No response received")
+                return
             }
             
-            self.cachedResults[cacheKey] = places
-            self.processPlaces(places)
+            print("📍 Places found: \(response.mapItems.count)")
+            
+            // Log all found places
+            response.mapItems.forEach { place in
+                guard let placeLoc = place.placemark.location else { return }
+                let distance = location.distance(from: placeLoc)
+                print("✅ \(place.name ?? "unnamed")")
+                print("   Distance: \(String(format: "%.1f", distance))m")
+                print("   Category: \(place.pointOfInterestCategory?.rawValue ?? "none")")
+                print("   Location: \(placeLoc.coordinate.latitude), \(placeLoc.coordinate.longitude)\n")
+            }
+            
+            // Process matching places
+            let matchingPlaces = response.mapItems
+                .compactMap { place -> (MKMapItem, Double)? in
+                    guard let placeLoc = place.placemark.location else { return nil }
+                    return (place, location.distance(from: placeLoc))
+                }
+                .filter { place, _ in
+                    guard let mapKitCategory = place.pointOfInterestCategory,
+                          let placeCategory = CategoryMapper.mapToPlaceCategory(mapKitCategory) else {
+                        return false
+                    }
+                    return self.categories.contains { $0.catName == placeCategory.rawValue }
+                }
+                .sorted { $0.1 < $1.1 }
+            
+            print("\n🎯 Matching places: \(matchingPlaces.count)")
+            
+            // Send notification for exact or closest match
+            if let exactMatch = matchingPlaces.first(where: { abs($0.1) < 0.1 }), // 0.1m threshold
+               let mapKitCategory = exactMatch.0.pointOfInterestCategory,
+               let placeCategory = CategoryMapper.mapToPlaceCategory(mapKitCategory),
+               let category = self.categories.first(where: { $0.catName == placeCategory.rawValue }) {
+                
+                print("🎯 Found exact location match: \(exactMatch.0.name ?? "unnamed")")
+                self.sendNotification(for: exactMatch.0.name ?? "a location", category: category)
+            }
+            else if let closestPlace = matchingPlaces.first,
+                    let mapKitCategory = closestPlace.0.pointOfInterestCategory,
+                    let placeCategory = CategoryMapper.mapToPlaceCategory(mapKitCategory),
+                    let category = self.categories.first(where: { $0.catName == placeCategory.rawValue }) {
+                
+                print("🎯 Using closest match: \(closestPlace.0.name ?? "unnamed") at \(String(format: "%.1f", closestPlace.1))m")
+                self.sendNotification(for: closestPlace.0.name ?? "a location", category: category)
+            }
         }
     }
     
-    // MARK: - Process Places
-    private func processPlaces(_ places: [MKMapItem]) {
-        print("Found \(places.count) total places")
-            places.forEach { place in
-                print("Place: \(place.name ?? "unnamed"), Category: \(place.pointOfInterestCategory?.rawValue ?? "none")")
-            }
-        
-        // Get the user's target categories from our local categories array
-        let userTargetCategories = categories.map { $0.catName }
-        
-        // Filter places that match the user's target categories
-        let matchingPlaces = places.filter { place in
-            guard let mapKitCategory = place.pointOfInterestCategory else { return false }
-            if let placeCategory = CategoryMapper.mapToPlaceCategory(mapKitCategory) {
-                return userTargetCategories.contains(placeCategory.rawValue)
-            }
-            return false
-        }
-        
-        if matchingPlaces.isEmpty {
-            print("No relevant places found.")
-            return
-        }
-        
-        // For matching places, find the corresponding category and send notification
-        if let closestPlace = matchingPlaces.first,
-           let mapKitCategory = closestPlace.pointOfInterestCategory,
-           let placeCategory = CategoryMapper.mapToPlaceCategory(mapKitCategory),
-           let category = categories.first(where: { $0.catName == placeCategory.rawValue }) {
-            
-            sendNotification(for: closestPlace.name ?? "a location", category: category)
-        }
-    }
-    
-    // MARK: - Notifications
     private func sendNotification(for placeName: String, category: Category) {
         let now = Date()
         if let lastNotification = recentNotifications[placeName],
@@ -189,21 +186,21 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
             print("Skipping notification for \(placeName) due to cooldown.")
             return
         }
-
+        
         recentNotifications[placeName] = now
         print("Sending notification for \(placeName)")
-
+        
         let content = UNMutableNotificationContent()
         content.title = "Budget Reminder"
         content.body = "You're at \(placeName). Your target budget for \(category.catName) is $\(category.target) per \(category.timeframe). You have $\(category.remainingBudget) left."
         content.sound = .default
-
+        
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
             content: content,
             trigger: nil
         )
-
+        
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("Notification error: \(error.localizedDescription)")
@@ -213,11 +210,8 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
         }
     }
     
-    // MARK: - Public Method to Start Timer After First Target
     func startTimerIfTargetsExist() {
-        // Stop existing timer if any
         stabilityTimer?.invalidate()
-        
         if !categories.isEmpty {
             print("Starting stability timer - categories exist")
             stabilityTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -226,25 +220,5 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
         } else {
             print("No categories exist - timer not started")
         }
-    }
-}
-
-
-// MARK: - Extensions
-extension Double {
-    func rounded(to decimals: Int) -> Double {
-        let multiplier = pow(10.0, Double(decimals))
-        return (self * multiplier).rounded() / multiplier
-    }
-}
-
-extension MKMapItem {
-    private struct AssociatedKeys {
-        static var timeStamp = "timeStamp"
-    }
-
-    var timeStamp: Date? {
-        get { objc_getAssociatedObject(self, &AssociatedKeys.timeStamp) as? Date }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.timeStamp, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
 }

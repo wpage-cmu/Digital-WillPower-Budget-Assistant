@@ -2,7 +2,7 @@
 //  categoryMapper.swift
 //  Digital WillPower Budget Assistant
 //
-//  Created by Will Page on 12/1/24.
+//  Created by Will Page in Q4 2024.
 //
 import MapKit
 import SwiftUI
@@ -35,6 +35,7 @@ enum PlaceCategory: String, CaseIterable {
 
 // MARK: - Mapping mapKit categories to WillPower categories
 struct CategoryMapper {
+    // Existing mapping method
     static func mapToPlaceCategory(_ mapKitCategory: MKPointOfInterestCategory) -> PlaceCategory? {
         switch mapKitCategory {
         case .restaurant:
@@ -43,10 +44,26 @@ struct CategoryMapper {
             return .foodMarket
         case .beauty:
             return .beauty
-        // Add more categories as needed
-
         default:
             return nil
+        }
+    }
+    
+    // New method to get all MapKit categories we handle
+    static func allMappedMKCategories() -> [MKPointOfInterestCategory] {
+        return [
+            .restaurant,
+            .foodMarket,
+            .beauty
+            // Add new categories here as needed
+        ]
+    }
+    
+    // New method to get MapKit category for a PlaceCategory
+    static func getMKCategory(for placeCategory: PlaceCategory) -> MKPointOfInterestCategory? {
+        // Use the existing mapping in reverse
+        return allMappedMKCategories().first { mkCategory in
+            mapToPlaceCategory(mkCategory) == placeCategory
         }
     }
 }
