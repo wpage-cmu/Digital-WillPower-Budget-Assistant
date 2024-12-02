@@ -1,84 +1,137 @@
 //
-//  target_details.swift
+//  targetDetails.swift
 //  Digital WillPower Budget Assistant
 //
 //  Created by Will Page on 11/16/24.
 //
 
 import SwiftUI
+import CoreLocation
+import MapKit
 
-struct TargetDetailsView: View {
-    @Binding var categories: [Category] // Binding to categories from ContentView
-    @State private var remainingBudgets: [UUID: Int] = [:] // Store remaining budgets for each category
-    
-    // Simulated function to fetch remaining budget (you’ll replace this with Plaid API calls)
-    private func fetchRemainingBudget(for categoryId: UUID) -> Int {
-        // This simulates a budget remaining value, replace with Plaid API call
-        return 150 // Random number as a placeholder
+// Location request
+class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
     }
     
-    var body: some View {
-        VStack {
-            Text("Target Details")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding()
-            
-            // List of categories with remaining budgets
-            VStack {
-                // List of categories and targets
-                ForEach(categories) { category in
-                    VStack(spacing: 0) {
-                        Divider() // Line at the top of the target
-                            .background(Color(UIColor.opaqueSeparator)) // Optional: Customize color
-                            .frame(height: 5)
-                            .frame(maxWidth: .infinity)
-                        
-                        HStack(alignment: .top) { // Align the elements vertically at the top
-                            VStack(alignment: .leading) {
-                                Text("\(category.catName)")
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.leading)
-                                    .padding(.top)
-                                    .foregroundColor(Color(.label))
-                                
-                                Text("Target: $\(category.target) /\(category.timeframe)")
-                                    .frame(maxWidth: .infinity, alignment: .leading)  // Align target to the left
-                                    .padding(.leading)
-                                    .foregroundColor(Color(.label))
-                                    .font(.subheadline)
-                            }
-                            
-                            Spacer() // Push the right content to the far right
-                            
-                            Text("$\(remainingBudgets[category.id] ?? fetchRemainingBudget(for: category.id)) left")
-                                .foregroundColor(Color(.label))
-                                .padding(.top)
-                                .padding(.trailing)
-                        }
-                        .foregroundColor(Color(red: 1.0, green: 0.98, blue: 0.94))
-                        .font(.custom("target", fixedSize: 24))
-                    }
-                    
-                    Divider() // Line at the bottom of the target
-                        .background(Color(UIColor.opaqueSeparator)) // Optional: Customize color
-                        .frame(maxWidth: .infinity)
-                        .onAppear {
-                            // Fetch remaining budget when category appears
-                            if remainingBudgets[category.id] == nil {
-                                let budget = fetchRemainingBudget(for: category.id)
-                                remainingBudgets[category.id] = budget
-                            }
-                        }
-                }
-                
-                Spacer()
-            }
-            .navigationTitle("All Targets")
+    func requestLocationPermission() {
+        manager.requestAlwaysAuthorization()
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if manager.authorizationStatus == .authorizedAlways {
+            manager.startUpdatingLocation()
         }
     }
 }
 
-#Preview {
-    TargetDetailsView(categories: .constant([Category(catName: "🍔 Eating out", target: 400, timeframe: "month")]))
+struct TargetDetailsView: View {
+    @EnvironmentObject var categoryManager: CategoryManager
+    @EnvironmentObject var targetReminderManager: TargetReminderManager // Add this line
+    @State private var showingAddCategoryForm = false
+    @StateObject private var locationManager = LocationManager() // Request permission at initialization
+
+    var body: some View {
+        VStack {
+            let _ = print("Rendering with categories: \(categoryManager.categories)") //debug
+            Text("My Targets")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .padding()
+
+            VStack {
+                Divider()
+                    .background(Color(UIColor.opaqueSeparator))
+                    .frame(height: 5)
+                    .frame(maxWidth: .infinity)
+
+                // Iterate through categories and display remaining budget
+                ForEach(Array(categoryManager.categories.enumerated()), id: \.element.id) { index, category in
+                    VStack(spacing: 0) {
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading) {
+                                Text("\(category.catName)")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading)
+
+                                Text("Target: $\(category.target) /\(category.timeframe)")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading)
+                                    .font(.subheadline)
+                            }
+
+                            Spacer()
+
+                            // Display remaining budget (already managed by CategoryManager)
+                            Text("$\(category.remainingBudget) left")
+                                .padding(.top)
+                                .padding(.trailing)
+                        }
+                    }
+                }
+
+                Spacer()
+            }
+
+            VStack {
+                Divider()
+                    .background(Color(UIColor.opaqueSeparator))
+                    .frame(height: 5)
+                    .frame(maxWidth: .infinity)
+
+                HStack {
+                    Button(action: { showingAddCategoryForm = true }) {
+                        HStack {
+                            Image(systemName: "plus.circle")
+                            Text("Add Target")
+                        }
+                        .font(.title)
+                        .padding()
+                    }
+                    
+                    Button(action: { categoryManager.clearAllCategories() }) {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Clear All")
+                        }
+                        .font(.title)
+                        .padding()
+                        .foregroundColor(.red)
+                    }
+                }
+                
+                .sheet(isPresented: $showingAddCategoryForm) {
+                    AddTargetForm()
+                        .environmentObject(categoryManager)
+                        .environmentObject(targetReminderManager)
+                }
+            }
+        }
+    }
+}
+
+
+
+// Preview for testing
+struct TargetDetailsView_Previews: PreviewProvider {
+    static var previews: some View {
+        let categoryManager = CategoryManager()
+        let targetReminderManager = TargetReminderManager()
+        
+        // Add some sample data for preview
+        categoryManager.addCategory(Category(
+            catName: "🍔 Eating out",
+            target: 100,
+            timeframe: "wk",
+            remainingBudget: 75
+        ))
+        
+        return TargetDetailsView()
+            .environmentObject(categoryManager)
+            .environmentObject(targetReminderManager)
+    }
 }

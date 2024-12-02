@@ -24,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		EF716E1E2CEE3864004F6A0B /* Digital WillPower Budget Assistant.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Digital WillPower Budget Assistant.xctestplan"; sourceTree = "<group>"; };
 		EF982B142CDBBC34005CCF5A /* Digital WillPower Budget Assistant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Digital WillPower Budget Assistant.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF982B242CDBBC36005CCF5A /* Digital WillPower Budget AssistantTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Digital WillPower Budget AssistantTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF982B2E2CDBBC36005CCF5A /* Digital WillPower Budget AssistantUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Digital WillPower Budget AssistantUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,6 +76,7 @@
 		EF982B0B2CDBBC34005CCF5A = {
 			isa = PBXGroup;
 			children = (
+				EF716E1E2CEE3864004F6A0B /* Digital WillPower Budget Assistant.xctestplan */,
 				EF982B162CDBBC34005CCF5A /* Digital WillPower Budget Assistant */,
 				EF982B272CDBBC36005CCF5A /* Digital WillPower Budget AssistantTests */,
 				EF982B312CDBBC36005CCF5A /* Digital WillPower Budget AssistantUITests */,
@@ -399,6 +401,10 @@
 				DEVELOPMENT_TEAM = 347834QV62;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Digital-WillPower-Budget-Assistant-Info.plist";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need your location to notify you about your budget when entering relevant places.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to notify you about your budget when entering relevant places.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We need permission to track your location for budget reminders.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -428,6 +434,10 @@
 				DEVELOPMENT_TEAM = 347834QV62;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Digital-WillPower-Budget-Assistant-Info.plist";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need your location to notify you about your budget when entering relevant places.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to notify you about your budget when entering relevant places.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We need permission to track your location for budget reminders.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
