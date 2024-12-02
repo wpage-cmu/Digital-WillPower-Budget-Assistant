@@ -1,0 +1,37 @@
+{
+  "configurations" : [
+    {
+      "id" : "523A0D4D-2F7C-48EC-AAAA-C4210F057895",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Digital WillPower Budget Assistant.xcodeproj",
+      "identifier" : "EF982B132CDBBC34005CCF5A",
+      "name" : "Digital WillPower Budget Assistant"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Digital WillPower Budget Assistant.xcodeproj",
+        "identifier" : "EF982B232CDBBC36005CCF5A",
+        "name" : "Digital WillPower Budget AssistantTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Digital WillPower Budget Assistant.xcodeproj",
+        "identifier" : "EF982B2D2CDBBC36005CCF5A",
+        "name" : "Digital WillPower Budget AssistantUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
