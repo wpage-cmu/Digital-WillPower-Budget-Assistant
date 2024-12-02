@@ -2,7 +2,7 @@
 //  categoryMapper.swift
 //  Digital WillPower Budget Assistant
 //
-//  Created by Will Page on 12/1/24.
+//  Created by Will Page in Q4 2024.
 //
 import MapKit
 import SwiftUI

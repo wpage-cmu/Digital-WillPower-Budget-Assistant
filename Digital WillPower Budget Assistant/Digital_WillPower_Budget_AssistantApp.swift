@@ -2,7 +2,7 @@
 //  Digital_WillPower_Budget_AssistantApp.swift
 //  Digital WillPower Budget Assistant
 //
-//  Created by Will Page on 11/6/24.
+//  Created by Will Page in Q4 2024.
 //
 import SwiftUI
 
