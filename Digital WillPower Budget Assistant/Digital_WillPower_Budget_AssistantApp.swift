@@ -14,8 +14,7 @@ struct Digital_WillPower_Budget_AssistantApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if categoryManager.categories.isEmpty {
-                // Show the Add Target form if no categories are present and it's the first launch
+            if categoryManager.categories.isEmpty { // Show the Add Target form if no categories exist
                 AddTargetForm()
                     .environmentObject(categoryManager)
                     .environmentObject(targetReminderManager)

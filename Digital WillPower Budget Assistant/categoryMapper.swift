@@ -8,8 +8,8 @@ import MapKit
 import SwiftUI
 import Foundation
 
-// Category initialization
-struct Category: Identifiable, Codable {
+// MARK: - Category initialization
+struct Category: Identifiable, Codable, Equatable {
     var id = UUID()
     var catName: String
     var target: Int
@@ -33,7 +33,7 @@ enum PlaceCategory: String, CaseIterable {
     // Add more categories here
 }
 
-// This structure maps MapKit categories to WillPower categories
+// MARK: - Mapping mapKit categories to WillPower categories
 struct CategoryMapper {
     static func mapToPlaceCategory(_ mapKitCategory: MKPointOfInterestCategory) -> PlaceCategory? {
         switch mapKitCategory {
@@ -51,9 +51,11 @@ struct CategoryMapper {
     }
 }
 
+// MARK: - Target management
 class CategoryManager: ObservableObject {
     @Published var categories: [Category]
-
+    var saveToUserDefaults = true
+    
     init() {
         // Load categories from UserDefaults if available
         if let data = UserDefaults.standard.data(forKey: "categoriesKey"),
@@ -82,7 +84,21 @@ class CategoryManager: ObservableObject {
         saveCategoriesToUserDefaults()
     }
     
+    func deleteCategory(_ category: Category) {
+        categories.removeAll { $0.id == category.id }
+        saveCategoriesToUserDefaults()
+    }
+
+    func updateCategory(_ category: Category) {
+        if let index = categories.firstIndex(where: { $0.id == category.id }) {
+            categories.remove(at: index)  // Remove old category
+            categories.insert(category, at: index)  // Insert updated category
+            saveCategoriesToUserDefaults()
+        }
+    }
+    
     private func saveCategoriesToUserDefaults() {
+        guard saveToUserDefaults else { return }  // Skip if preview
         if let encoded = try? JSONEncoder().encode(categories) {
             UserDefaults.standard.set(encoded, forKey: "categoriesKey")
         }
