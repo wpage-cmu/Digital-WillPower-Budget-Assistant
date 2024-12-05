@@ -31,11 +31,15 @@ First was color pallette. I made a color pallette of mainly creme, forest green,
 
 The second iteration was in onboarding. After FP3, I got feedback from my TA and classmates to make it clearer what a target is and how to set it up. Now, if a user has 0 targets, they are met with the target creation form (addTarget.swift). I kept this interface very simple: pick your category, your budget, and the timeframe you want to spend that over. This will ensure that a user has done the 'Aha' action that is key to a successful usage of the product.
 
-
 ## Implementation Challenge
-The largest implementation challenge was making a robust notification algorithm. Location can be pretty sensitive, so I accounted for 'snaps' in location data by controlling 'horizontal accuracy' (disincluded location samples from the device where the confidence was low). Secondly, how long 
-
+The largest implementation challenge was making a robust notification algorithm. Location can be pretty sensitive, so I accounted for 'snaps' in location data by controlling 'horizontal accuracy' (disincluded location samples from the device where the confidence was low). Secondly, the search algorithm was tough to make robust. I continuously got a logic error where the search would bring back the locations nearest the coordinate for the city I was in (so when I was testing as if I was at campus Chipotle, it would yield Downtown results). This was resolved by expanding the search radius! Very counterintuitive! The problem was MapKit doesn't love it when you search with too precise accuracy, and would fall back to a region/city search rather than the radius you set up.
 
 ## GenAI Use
+I used ChatGPT and Claude in this project, and think Claude ended up being way better. I wanted to try out different techniques of using GenAI while programming, so I tried 3 main types of interaction:
+- complete unreliance on GenAI (doing the full programming myself and using typical google/reddit/stack overflow searching to figure it out. This is how I built most of the targetReminder, addTarget, and the targetDetails screen)
+- semi-reliance, where I would use GenAI as first pass, interpret the code to ensure its quality and did what I wanted to do. Then, continued to prompt to refine any parts that were not right, then used that code. I used this method for debugging mainly, and it was very helpful. This also helped me figure out the search radius problem above.
+- complete reliance, where I would blindly trust, paste in, and troubleshoot from there. This method was not good, and I found myself wasting a lot of time with it. Almost none of my project ended up getting built with this except for the basic UI components as I got more familiar with Swift.
+
+To reflect on this, GenAI is incredible in that it lowers the barrier to entry into new technogologies. I had barely worked with Swift and never worked with MapKit, but I was able to build this project successfully. That said, I can definitely see how easy it is to rely too much on the technology. It was an act of discipline to not overrely on GenAI in order to preserve my learning from the class.
 
 ## Demo Video
