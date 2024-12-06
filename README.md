@@ -11,7 +11,8 @@ This is interesting because it is a real problem for people. Almost everyone I h
 This is a mobile app, meant for use on an iPhone. This app is responsive to both standard and Pro Max sizes of iPhones and can be used in both landscape and portrait orientation. 
 
 Upon launching the app for the first time, a user is met with their first target screen:
-IMAGE OF ADD TARGET SCREEN
+![Description](https://drive.google.com/file/d/1BPTzSSZd1HhmlUdwKTIMxrIVNS9RWmaV/view?usp=sharing)
+
 
 Once a user adds their first target, their location begins being tracked (locationManager). Once their location is established as stable (evaluateStability), WillPower scans 15m around them to search for PoIs for which the user has a target made (checkLocation). Then, once the PoIs are retrieved, WillPower uses the closest one as the user's location. Finally, the user receives a notification with their target budget for the category of the PoI they are in (sendNotification). 
 IMAGE OF NOTIFICATION
