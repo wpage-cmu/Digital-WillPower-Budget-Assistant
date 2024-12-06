@@ -51,6 +51,7 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
             .store(in: &cancellables)
     }
     
+    // MARK: - Grab location to start stability logic
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let newLocation = locations.last else { return }
         
@@ -68,6 +69,7 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
         }
     }
     
+    // MARK: - Stability logic
     private func resetStabilityTracking(_ location: CLLocation) {
         stableLocation = location
         stableStartTime = Date()
@@ -95,7 +97,8 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
             resetStabilityTracking(currentLocation)
         }
     }
-    
+   
+    // MARK: - Location search once stability has been established
     private func checkLocation(_ location: CLLocation) {
         print("📍 Starting location search at: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         print("🎯 Search radius: \(Int(searchRadius))m")
@@ -178,7 +181,8 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
             }
         }
     }
-    
+  
+    // MARK: - Send notification
     private func sendNotification(for placeName: String, category: Category) {
         let now = Date()
         if let lastNotification = recentNotifications[placeName],
@@ -209,7 +213,8 @@ class TargetReminderManager: NSObject, ObservableObject, CLLocationManagerDelega
             }
         }
     }
-    
+ 
+    // MARK: - Start initial stability timer
     func startTimerIfTargetsExist() {
         stabilityTimer?.invalidate()
         if !categories.isEmpty {

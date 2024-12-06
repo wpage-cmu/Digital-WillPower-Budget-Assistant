@@ -31,12 +31,14 @@ struct AddTargetForm: View {
         }
     }
     
+    // MARK: - Commits targets to local storage
     private func saveCategoriesToUserDefaults() {
         if let encodedCategories = try? JSONEncoder().encode(categoryManager.categories) {
             UserDefaults.standard.set(encodedCategories, forKey: "categoriesKey")
         }
     }
-    
+   
+    // MARK: - Add target form
     var body: some View {
         NavigationView {
             Group {
