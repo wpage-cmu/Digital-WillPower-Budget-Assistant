@@ -47,4 +47,4 @@ I used ChatGPT and Claude in this project, and think Claude ended up being way b
 To reflect on this, GenAI is incredible in that it lowers the barrier to entry into new technogologies. I had barely worked with Swift and never worked with MapKit, but I was able to build this project successfully. That said, I can definitely see how easy it is to rely too much on the technology. It was an act of discipline to not overrely on GenAI in order to preserve my learning from the class.
 
 ## Demo Video
-<a href="https://drive.google.com/file/d/1UHA9k6YcUZRDmW9RQal79ugDkhhPKx_F/view?usp=sharing" target="_blank">▶️ Watch Demo Video</a>
+<a href="https://drive.google.com/file/d/1P6-bBfGNX7w3w76jqFafs3t1ijHORs4x/view?usp=sharing" target="_blank">▶️ Watch Demo Video</a>
