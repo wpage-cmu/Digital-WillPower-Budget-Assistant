@@ -11,11 +11,14 @@ This is interesting because it is a real problem for people. Almost everyone I h
 This is a mobile app, meant for use on an iPhone. This app is responsive to both standard and Pro Max sizes of iPhones and can be used in both landscape and portrait orientation. 
 
 Upon launching the app for the first time, a user is met with their first target screen:
-![Description](https://drive.google.com/file/d/1BPTzSSZd1HhmlUdwKTIMxrIVNS9RWmaV/view?usp=sharing)
 
+<img src="https://github.com/wpage-cmu/Digital-WillPower-Budget-Assistant/blob/main/Digital%20WillPower%20Budget%20Assistant/Assets.xcassets/FP_addTarget_image.png" width="300" alt="alt text">
 
 Once a user adds their first target, their location begins being tracked (locationManager). Once their location is established as stable (evaluateStability), WillPower scans 15m around them to search for PoIs for which the user has a target made (checkLocation). Then, once the PoIs are retrieved, WillPower uses the closest one as the user's location. Finally, the user receives a notification with their target budget for the category of the PoI they are in (sendNotification). 
-IMAGE OF NOTIFICATION
+
+<img src="https://github.com/wpage-cmu/Digital-WillPower-Budget-Assistant/blob/main/Digital%20WillPower%20Budget%20Assistant/Assets.xcassets/FP_notifiation_image.PNG" width="300" alt="alt text">
+
+
 
 The user can edit or add more targets in the main UI (targetDetails.swift).
 
@@ -44,3 +47,4 @@ I used ChatGPT and Claude in this project, and think Claude ended up being way b
 To reflect on this, GenAI is incredible in that it lowers the barrier to entry into new technogologies. I had barely worked with Swift and never worked with MapKit, but I was able to build this project successfully. That said, I can definitely see how easy it is to rely too much on the technology. It was an act of discipline to not overrely on GenAI in order to preserve my learning from the class.
 
 ## Demo Video
+<a href="https://drive.google.com/file/d/1UHA9k6YcUZRDmW9RQal79ugDkhhPKx_F/view?usp=sharing" target="_blank">▶️ Watch Demo Video</a>
